@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Direct Budget Allocation - Spending</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="p-4 md:p-8 bg-gray-100">
+
+    <header class="mb-6 flex justify-between items-center">
+        <h1 class="text-2xl md:text-3xl font-bold text-gray-800">National Spending (Outgoings)</h1>
+        <div>
+            <button id="infoButton" class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg shadow" data-tooltip="Learn about this system">How it Works</button>
+            <a href="index.html" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-2 px-4 rounded-lg shadow">&larr; Home</a>
+        </div>
+    </header>
+
+    <section id="outgoingsSection" class="bg-white p-6 rounded-lg shadow-md">
+        <div class="flex justify-between items-center border-b pb-2 mb-2">
+            <h2 id="breadcrumb" class="text-lg font-semibold text-gray-700">Current Level: National</h2>
+            <button id="backButton" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-1 px-3 rounded-lg text-sm shadow hidden" data-tooltip="Go back to parent category">&larr; Back</button>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <!-- Primary Focus: Your Allocation -->
+            <div class="lg:col-span-2">
+                <h3 class="text-xl font-semibold mb-2 text-center text-gray-700">Your Allocation</h3>
+                <p class="text-sm text-gray-600 text-center mb-2">Adjust the budget below. Click a slice to drill down.</p>
+                <div class="chart-container h-96 mx-auto">
+                    <canvas id="outgoingsChart"></canvas>
+                </div>
+                <div class="mt-4 text-center space-x-2">
+                    <button id="adoptProposal" class="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-1 px-3 rounded-lg text-xs shadow" data-tooltip="Adopt the Executive's proposed budget">Adopt Proposal</button>
+                    <button id="resetAllocation" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold py-1 px-3 rounded-lg text-xs shadow" data-tooltip="Reset your allocation to last year's public vote">Reset to Last Year's Vote</button>
+                </div>
+            </div>
+
+            <!-- Sub-details: Proposal, Justification, Actuals -->
+            <div class="lg:col-span-1 flex flex-col justify-around mt-6 lg:mt-0">
+                <div>
+                    <h3 class="text-lg font-semibold mb-2 text-center text-gray-700">Executive Proposal</h3>
+                    <div class="chart-container h-48 mx-auto">
+                        <canvas id="proposalChart"></canvas>
+                    </div>
+                </div>
+                <div class="my-4 p-3 bg-gray-50 rounded-lg border">
+                    <h4 class="text-sm font-semibold text-gray-800">Justification:</h4>
+                    <p id="currentJustification" class="text-xs text-gray-700 italic"></p>
+                </div>
+                <div>
+                    <h3 class="text-lg font-semibold mb-2 text-center text-gray-700">Last Year's Actual</h3>
+                    <div class="chart-container h-48 mx-auto">
+                        <canvas id="lastYearChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="border-t mt-6 pt-4">
+            <div id="outgoingsInputs" class="space-y-2 text-sm"></div>
+            <p id="outgoingsTotalWarning" class="text-red-600 font-semibold mt-2 hidden">Total must be 100%</p>
+            <div class="mt-6">
+                <label for="totalAllocated" class="block text-sm font-medium text-gray-700 mb-1">Top-Level Budget Allocated:</label>
+                <div class="progress-bar-bg h-6 w-full">
+                    <div id="totalAllocatedBar" class="progress-bar-fill bg-blue-500" style="width: 100%;">100%</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-8 text-center border-t pt-6">
+            <button id="assignButton" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-6 rounded-lg shadow transition duration-150 ease-in-out mr-4" data-tooltip="Submit your proposed budget allocation (simulation)">Assign My Budget</button>
+            <button id="compareButton" class="bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-6 rounded-lg shadow transition duration-150 ease-in-out" data-tooltip="See how your budget compares to the current public average (example)">Compare Budgets</button>
+        </div>
+    </section>
+
+    <!-- Comparison Section (Modal-like) -->
+    <div id="comparisonSection" class="mt-8 p-6 bg-white rounded-lg shadow-md hidden"></div>
+
+    <!-- Info Sidebar -->
+    <div id="infoSidebar" class="fixed top-0 right-0 h-full w-full max-w-sm bg-white shadow-xl p-6 transform translate-x-full z-20 overflow-y-auto"></div>
+    <div id="sidebarOverlay" class="fixed inset-0 bg-black opacity-50 z-10 hidden"></div>
+
+    <script src="js/data.js"></script>
+    <script src="js/app.js"></script>
+
+</body>
+</html>

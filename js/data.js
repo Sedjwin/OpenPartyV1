@@ -1,0 +1,351 @@
+// --- Data Definitions ---
+
+const incomeData = {
+    name: "National Income Sources",
+    responsiblePerson: "The Chancellor of the Exchequer",
+    justification: "This is our proposed plan for raising national revenue. Your allocation will determine our focus, whether on personal earnings, business profits, or sales tax.",
+    totalRevenue: {
+        base: 1000, // Base revenue in Billions (£)
+        lastYearActual: 1050,
+        proposed: 1100,
+    },
+    children: [
+        { id: 'income_tax', name: 'Income Tax', lastYearAllocation: 40, proposedAllocation: 42, lastYearActuals: 41, userAllocation: 40, justification: "Tax on salaries and wages. We propose a slight increase to fund public services.", responsibleBody: "HM Treasury" },
+        { id: 'vat', name: 'VAT (Sales Tax)', lastYearAllocation: 30, proposedAllocation: 30, lastYearActuals: 29, userAllocation: 30, justification: "Tax on goods and services. We are holding this steady.", responsibleBody: "HM Treasury" },
+        { id: 'corp_tax', name: 'Corporation Tax', lastYearAllocation: 15, proposedAllocation: 12, lastYearActuals: 16, userAllocation: 15, justification: "We propose a cut to make the UK more attractive for businesses.", responsibleBody: "HM Treasury" },
+        { id: 'nat_ins', name: 'National Insurance', lastYearAllocation: 10, proposedAllocation: 11, lastYearActuals: 10, userAllocation: 10, justification: "A contribution that primarily funds the NHS and state pensions.", responsibleBody: "HM Treasury" },
+        { id: 'other_tax', name: 'Other Taxes', lastYearAllocation: 5, proposedAllocation: 5, lastYearActuals: 4, userAllocation: 5, justification: "A mix of smaller taxes like fuel duty, alcohol duty, and capital gains.", responsibleBody: "HM Treasury" },
+    ]
+};
+
+const outgoingsData = {
+    id: 'national',
+    name: 'National Spending',
+    responsibleBody: "The Prime Minister & The Cabinet Office",
+    justification: "My proposed budget focuses on tackling healthcare waiting lists and strengthening national security. However, your final allocation will guide my government's priorities for the coming year.",
+    children: [
+        {
+            id: 'health',
+            name: 'Healthcare',
+            responsibleBody: "Department of Health & Social Care",
+            justification: "We propose a significant funding increase to reduce waiting times. Last year, we overspent our allocation due to unforeseen winter pressures, demonstrating the need for a larger budget.",
+            lastYearAllocation: 35,
+            proposedAllocation: 38,
+            lastYearActualSpending: 37,
+            userAllocation: 35,
+            warningThreshold: 0.9,
+            children: [
+                {
+                    id: 'nhs_england',
+                    name: 'NHS England Operations',
+                    responsibleBody: "NHS England Executive Board",
+                    justification: "The majority of the health budget is allocated here. Our proposal focuses on acute care, but you may wish to reallocate funds to primary or preventative care.",
+                    lastYearAllocation: 95,
+                    proposedAllocation: 95,
+                    lastYearActualSpending: 96,
+                    userAllocation: 95,
+                    children: [
+                        {
+                            id: 'acute_care',
+                            name: 'Hospitals & Acute Care',
+                            responsibleBody: "NHS Acute Care Directorate",
+                            justification: "Hospitals are at breaking point. My proposal focuses funding here to ensure A&E can cope. Last year's overspend was necessary to maintain services.",
+                            lastYearAllocation: 60,
+                            proposedAllocation: 65,
+                            lastYearActualSpending: 63,
+                            userAllocation: 60,
+                            children: [
+                                {
+                                    id: 'good_hospital',
+                                    name: 'GoodExample Hospital Trust',
+                                    responsibleBody: "Board of Directors, GoodExample Trust",
+                                    justification: "We managed our budget effectively last year, coming in just under allocation while meeting our targets. We propose a similar budget this year.",
+                                    lastYearAllocation: 80,
+                                    proposedAllocation: 80,
+                                    lastYearActualSpending: 79,
+                                    userAllocation: 80,
+                                    children: []
+                                },
+                                {
+                                    id: 'bad_hospital',
+                            name: 'BadExample Hospital Trust',
+                            responsibleBody: "Mr. G. Reedy, CEO",
+                            justification: "While patient outcomes were suboptimal, it was essential to approve significant expenditure on consultancy and executive transport to facilitate high-level strategic planning and secure future efficiencies.",
+                            lastYearAllocation: 20,
+                            proposedAllocation: 20,
+                            lastYearActualSpending: 45, // Massively overspent
+                            userAllocation: 20,
+                            children: [
+                                {
+                                    id: 'bad_hospital_staff',
+                                    name: 'Patient Care & Staffing',
+                                    responsibleBody: "The Patient Care Committee",
+                                    justification: "This is the core funding for our doctors, nurses, and medical supplies on the wards. Last year, our budget was unexpectedly cut mid-year, leading to staff shortages.",
+                                    lastYearAllocation: 70,
+                                    proposedAllocation: 70,
+                                    lastYearActualSpending: 30, // Drastically cut
+                                    userAllocation: 70,
+                                    children: []
+                                },
+                                {
+                                    id: 'bad_hospital_maint',
+                                    name: 'Building Maintenance',
+                                    responsibleBody: "Estates Department",
+                                    justification: "Funding to keep the hospital safe and operational. We were forced to delay critical repairs last year due to budget reallocation.",
+                                    lastYearAllocation: 20,
+                                    proposedAllocation: 20,
+                                    lastYearActualSpending: 10, // Also cut
+                                    userAllocation: 20,
+                                    children: []
+                                },
+                                {
+                                    id: 'bad_hospital_admin',
+                                    name: 'Executive Logistics & Travel',
+                                    responsibleBody: "Ms. Ashley Spendlove, Head of Executive Operations",
+                                    justification: "To enhance strategic agility and facilitate vital stakeholder engagement across our national network, we procured dedicated air transport, ensuring senior leadership could attend critical meetings without delay, thereby maximizing operational oversight.",
+                                    lastYearAllocation: 10, // The public gave them a small admin budget
+                                    proposedAllocation: 10, // They propose the same small budget
+                                    lastYearActualSpending: 60, // But actually spent a huge amount
+                                    userAllocation: 10,
+                                    children: []
+                                }
+                            ]
+                                }
+                            ]
+                        },
+                        {
+                            id: 'primary_care',
+                            name: 'Primary Care (GPs)',
+                            responsibleBody: "GP Commissioning Board",
+                            justification: "To fund hospitals, the national proposal reduces GP funding. We argue this is short-sighted. We underspent slightly last year by delaying some IT upgrades.",
+                            lastYearAllocation: 25,
+                            proposedAllocation: 20,
+                            lastYearActualSpending: 24,
+                            userAllocation: 25,
+                            children: []
+                        },
+                        {
+                            id: 'mental_health',
+                            name: 'Mental Health Services',
+                            responsibleBody: "National Mental Health Directorate",
+                            justification: "We are asking for the same allocation as last year. We underspent due to recruitment challenges, which we have now resolved and are ready to expand services.",
+                            lastYearAllocation: 10,
+                            proposedAllocation: 10,
+                            lastYearActualSpending: 9,
+                            userAllocation: 10,
+                            warningThreshold: 0.85,
+                            children: []
+                        },
+                        {
+                            id: 'dental',
+                            name: 'Dentistry',
+                            responsibleBody: "NHS Dental Commissioning Board",
+                            justification: "Access to NHS dentistry is in crisis. We are proposing a significant increase in our share of the budget to attract more dentists to the NHS.",
+                            lastYearAllocation: 5,
+                            proposedAllocation: 5,
+                            lastYearActualSpending: 4,
+                            userAllocation: 5,
+                            children: []
+                        }
+                    ]
+                },
+                {
+                    id: 'health_capital',
+                    name: 'Capital Investment',
+                    responsibleBody: "DHSC Capital Projects Board",
+                    justification: "This funds new hospitals and major equipment like MRI scanners. We underspent last year due to planning delays on a major hospital project.",
+                    lastYearAllocation: 5,
+                    proposedAllocation: 5,
+                    lastYearActualSpending: 4,
+                    userAllocation: 5,
+                    children: []
+                }
+            ]
+        },
+        {
+            id: 'education',
+            name: 'Education',
+            responsibleBody: "Department for Education",
+            justification: "Our proposal prioritises core schooling, especially addressing the maintenance backlog exemplified by the St. Unknown case. This means less funding for Higher Education.",
+            lastYearAllocation: 20,
+            proposedAllocation: 20,
+            lastYearActualSpending: 20,
+            userAllocation: 20,
+            warningThreshold: 0.9,
+            children: [
+                {
+                    id: 'primary_secondary',
+                    name: 'Schools (5-18)',
+                    responsibleBody: "Schools Funding Agency",
+                    justification: "We must address the crumbling school estate. Our proposal shifts funds to capital maintenance. You can see we overspent last year due to emergency repairs.",
+                    lastYearAllocation: 65,
+                    proposedAllocation: 70,
+                    lastYearActualSpending: 68,
+                    userAllocation: 65,
+                    children: [
+                        {
+                            id: 'exampletown_schools',
+                            name: 'Exampletown Area Schools',
+                            responsibleBody: "Education Board, Exampletown Council",
+                            justification: "The St. Unknown School roof situation is critical and must be our priority. My proposal gives them the majority of our capital budget this year to avoid closing the school.",
+                            lastYearAllocation: 10,
+                            proposedAllocation: 15,
+                            lastYearActualSpending: 10,
+                            userAllocation: 10,
+                            children: [
+                                {
+                                    id: 'st_unknown',
+                                    name: 'St. Unknown School',
+                                    responsibleBody: "Mrs. Gable, Head Teacher",
+                                    justification: "The west wing roof is unsafe. My proposal allocates almost everything to building maintenance. This is not a choice; it's a necessity. It will mean cuts to supplies, but we have no alternative.",
+                                    lastYearAllocation: 50,
+                                    proposedAllocation: 60,
+                                    lastYearActualSpending: 48,
+                                    userAllocation: 50,
+                                    children: [
+                                        { id: 'st_unknown_staff', name: 'Staffing', lastYearAllocation: 70, proposedAllocation: 70, lastYearActualSpending: 70, userAllocation: 70, responsibleBody:"School Governors", justification: "Fixed cost for salaries." },
+                                        { id: 'st_unknown_supplies', name: 'Supplies & Resources', lastYearAllocation: 15, proposedAllocation: 5, lastYearActualSpending: 10, userAllocation: 15, warningThreshold: 0.8, responsibleBody:"Mr. Pen, Lead Teacher", justification: "I understand the roof issue, but with this cut, we cannot afford textbooks." },
+                                        { id: 'st_unknown_maint', name: 'Building Maintenance', lastYearAllocation: 15, proposedAllocation: 25, lastYearActualSpending: 18, userAllocation: 15, responsibleBody:"Mr. Fixit, School Bursar", justification: "The roof requires this entire allocation. Anything less and the project cannot proceed." },
+                                    ]
+                                },
+                                { id: 'other_exampletown', name: 'Other Exampletown Schools', lastYearAllocation: 50, proposedAllocation: 40, lastYearActualSpending: 52, userAllocation: 50, responsibleBody:"Education Board, Exampletown Council", justification: "Funding for the other 15 schools in our area. They will have to pause non-essential repairs to support St. Unknown's." },
+                            ]
+                        },
+                        { id: 'other_areas_schools', name: 'Schools (Rest of Country)', lastYearAllocation: 90, proposedAllocation: 85, lastYearActualSpending: 90, userAllocation: 90, responsibleBody:"Schools Funding Agency", justification: "Funding for all other local authorities, distributed by the national formula." },
+                    ]
+                },
+                {
+                    id: 'higher_ed',
+                    name: 'Higher Education',
+                    responsibleBody: "Office for Students & UK Research and Innovation",
+                    justification: "The government's proposal cuts our funding. We argue this is a false economy that will damage our world-leading universities and long-term economic growth.",
+                    lastYearAllocation: 25,
+                    proposedAllocation: 20,
+                    lastYearActualSpending: 25,
+                    userAllocation: 25,
+                    children: []
+                },
+                {
+                    id: 'skills_training',
+                    name: 'Skills & Apprenticeships',
+                    responsibleBody: "Vocational Training Board",
+                    justification: "We propose focusing on green energy apprenticeships. We had a surplus last year as a key training partner went into administration, so we can manage with the proposed allocation.",
+                    lastYearAllocation: 10,
+                    proposedAllocation: 10,
+                    lastYearActualSpending: 7,
+                    userAllocation: 10,
+                    children: []
+                },
+            ]
+        },
+        {
+            id: 'transport',
+            name: 'Transport',
+            responsibleBody: "Department for Transport",
+            justification: "I propose a cut to transport to fund other areas. Last year, we significantly overspent on Rail due to strike-related disruption and emergency engineering works.",
+            lastYearAllocation: 10,
+            proposedAllocation: 8,
+            lastYearActualSpending: 12,
+            userAllocation: 10,
+            children: [
+                {
+                    id: 'rail',
+                    name: 'Rail Network',
+                    responsibleBody: "National Rail Executive Board",
+                    justification: "The network is old and requires significant investment. My proposal increases our share of the transport budget to cover essential upgrades and improve reliability.",
+                    lastYearAllocation: 40,
+                    proposedAllocation: 50,
+                    lastYearActualSpending: 60, // Significant overspend
+                    userAllocation: 40,
+                    children: []
+                },
+                {
+                    id: 'roads',
+                    name: 'Roads & Highways',
+                    responsibleBody: "Highways Agency Directorate",
+                    justification: "Our road network is vital. We spent our budget effectively last year and I am proposing a similar allocation to continue pothole repairs and motorway maintenance.",
+                    lastYearAllocation: 40,
+                    proposedAllocation: 35,
+                    lastYearActualSpending: 40,
+                    userAllocation: 40,
+                    children: []
+                },
+                {
+                    id: 'local_transport',
+                    name: 'Local & Public Transport',
+                    responsibleBody: "Regional Transport Commission",
+                    justification: "Buses are the lifeblood of our communities. The government proposal cuts our funding, which will lead to route closures. We are asking for a larger share.",
+                    lastYearAllocation: 20,
+                    proposedAllocation: 15,
+                    lastYearActualSpending: 20,
+                    userAllocation: 20,
+                    children: []
+                }
+            ]
+        },
+        {
+            id: 'justice',
+            name: 'Justice',
+            responsibleBody: "Ministry of Justice",
+            justification: "Our prisons are dangerously overcrowded. We are making the case for an increased allocation to build new prisons and recruit more prison officers.",
+            lastYearAllocation: 5,
+            proposedAllocation: 6,
+            lastYearActualSpending: 5,
+            userAllocation: 5,
+            children: [
+                { id: 'prisons', name: 'Prisons & Probation', lastYearAllocation: 60, proposedAllocation: 70, lastYearActualSpending: 60, userAllocation: 60, responsibleBody:"HM Prison Service", justification: "Overcrowding is a critical safety issue. We need this increase to build new capacity." },
+                { id: 'courts', name: 'Courts & Tribunals', lastYearAllocation: 30, proposedAllocation: 20, lastYearActualSpending: 30, userAllocation: 30, responsibleBody:"HM Courts Service", justification: "The proposal cuts our funding, which will increase the case backlog and delay justice for victims." },
+                { id: 'legal_aid', name: 'Legal Aid', lastYearAllocation: 10, proposedAllocation: 10, lastYearActualSpending: 10, userAllocation: 10, responsibleBody:"Legal Aid Agency", justification: "Ensuring access to justice for all. We are requesting the same budget as last year." },
+            ]
+        },
+        {
+            id: 'defence',
+            name: 'Defence',
+            responsibleBody: "Ministry of Defence",
+            justification: "In a more dangerous world, we must invest in our security. I am proposing a significant increase to fund the next generation of naval vessels and support our armed forces.",
+            lastYearAllocation: 8,
+            proposedAllocation: 10,
+            lastYearActualSpending: 8,
+            userAllocation: 8,
+            children: []
+        },
+        {
+            id: 'home_office',
+            name: 'Home Office',
+            responsibleBody: "The Home Office",
+            justification: "Our proposal focuses on policing and border security. Last year's overspend on border systems was due to unforeseen IT challenges with a key contractor.",
+            lastYearAllocation: 8,
+            proposedAllocation: 9,
+            lastYearActualSpending: 9,
+            userAllocation: 8,
+            children: [
+                { id: 'policing', name: 'Policing', lastYearAllocation: 60, proposedAllocation: 60, lastYearActualSpending: 60, userAllocation: 60, responsibleBody:"National Police Chiefs' Council", justification: "We are focused on increasing officer numbers and tackling violent crime." },
+                { id: 'borders', name: 'Borders & Immigration', lastYearAllocation: 40, proposedAllocation: 40, lastYearActualSpending: 55, userAllocation: 40, responsibleBody:"Border Force Executive Board", justification: "The overspend was due to urgent operational requirements and supplier cost increases on a critical IT system. We have resolved these issues." },
+            ]
+        },
+        {
+            id: 'central_funds',
+            name: 'Central Funds & Other',
+            responsibleBody: "HM Treasury",
+            justification: "This covers cross-government spending, including debt interest and a contingency reserve. The large overspend last year was due to emergency energy subsidies.",
+            lastYearAllocation: 14,
+            proposedAllocation: 10,
+            lastYearActualSpending: 18,
+            userAllocation: 14,
+            children: [
+                { id: 'debt_interest', name: 'National Debt Interest', lastYearAllocation: 50, proposedAllocation: 50, lastYearActualSpending: 50, userAllocation: 50, responsibleBody:"Debt Management Office", justification: "A non-discretionary payment on government borrowing." },
+                { id: 'contingency', name: 'Treasury Reserve', lastYearAllocation: 20, proposedAllocation: 30, lastYearActualSpending: 40, userAllocation: 20, responsibleBody:"Contingencies Fund Committee", justification: "A central fund for unforeseen emergencies. Last year, this was used for flood relief and support for Ukraine." },
+                { id: 'other_depts', name: 'Other Departments', lastYearAllocation: 30, proposedAllocation: 20, lastYearActualSpending: 10, userAllocation: 30, responsibleBody:"Cabinet Office", justification: "Funding for smaller departments like Culture, Media & Sport, and Environment. We underspent last year after a major project was cancelled." },
+            ]
+        }
+    ]
+};
+
+const publicAverageData = [
+    { name: 'Healthcare', value: 38 },
+    { name: 'Education', value: 18 },
+    { name: 'Welfare & Pensions', value: 26 },
+    { name: 'Defence', value: 7 },
+    { name: 'Transport', value: 4 },
+    { name: 'Other Spending', value: 7 },
+];

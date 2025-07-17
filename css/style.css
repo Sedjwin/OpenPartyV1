@@ -1,0 +1,67 @@
+/* Custom styles */
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: #f3f4f6; /* Light gray background */
+}
+/* Tooltip styles */
+[data-tooltip]:hover::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    background-color: #1f2937; /* Dark gray */
+    color: #ffffff;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.875rem;
+    white-space: nowrap;
+    z-index: 10;
+    margin-left: 10px; /* Position tooltip slightly to the right */
+    margin-top: -25px; /* Adjust vertical position */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+/* Sidebar styles */
+#infoSidebar {
+    transition: transform 0.3s ease-in-out;
+}
+.chart-container {
+    position: relative;
+    height: 350px; /* Adjust as needed */
+    width: 100%;
+    max-width: 400px; /* Limit max width */
+    margin: auto;
+}
+/* Style for input fields next to chart */
+.allocation-input {
+    width: 60px; /* Fixed width for number inputs */
+}
+.warning-text {
+    color: #dc2626; /* Red-600 */
+    font-weight: 600;
+}
+ /* Simple progress bar styling */
+.progress-bar-bg {
+    background-color: #e5e7eb; /* Gray-200 */
+    border-radius: 9999px;
+    overflow: hidden;
+}
+.progress-bar-fill {
+    background-color: #3b82f6; /* Blue-500 */
+    height: 100%;
+    transition: width 0.3s ease-in-out;
+    text-align: center;
+    color: white;
+    font-weight: 500;
+    line-height: 1.5rem; /* Match height */
+    border-radius: 9999px;
+}
+ /* Style for comparison charts */
+.comparison-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2rem;
+    justify-content: space-around;
+    margin-top: 2rem;
+}
+.comparison-chart {
+    width: 100%;
+    max-width: 400px;
+}
