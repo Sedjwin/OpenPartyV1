@@ -131,12 +131,10 @@ function createIncomeInputFields(container, dataNode) {
             item.userAllocation = newValue;
             e.target.value = newValue.toFixed(1);
 
-            // Update the user's chart and totals efficiently
-            incomeChartInstance.data.datasets[0].data[index] = newValue;
-            incomeChartInstance.update();
-            updateIncomeTotals(dataNode);
+            updateAllIncomeCharts(dataNode);
         });
     });
+    updateAllIncomeCharts(dataNode);
 }
 
 function validateTotal(items, warningElement, key) {
@@ -197,7 +195,14 @@ function updateAllOutgoingCharts(dataNode) {
     createSpendingInputFields(outgoingsInputsContainer, dataNode);
 }
 
-function updateIncomeTotals(dataNode) {
+function updateAllIncomeCharts(dataNode) {
+    const responsible = dataNode.responsibleBody || dataNode.responsiblePerson || 'N/A';
+    if (justificationElement) justificationElement.textContent = `${responsible}: ${dataNode.justification || 'No justification provided.'}`;
+
+    updateChart(incomeChartInstance, dataNode, 'userAllocation');
+    updateChart(incomeProposalChartInstance, dataNode, 'proposedAllocation');
+    updateChart(incomeLastYearChartInstance, dataNode, 'lastYearActuals');
+
     // Update total revenue displays
     const calculateTotalRevenue = (items, key) => {
         const totalPercentage = items.reduce((sum, item) => sum + item[key], 0);
@@ -207,19 +212,6 @@ function updateIncomeTotals(dataNode) {
     if (userRevenueTotalElement) userRevenueTotalElement.textContent = `£${calculateTotalRevenue(dataNode.children, 'userAllocation')} Billion`;
     if (proposalRevenueTotalElement) proposalRevenueTotalElement.textContent = `£${calculateTotalRevenue(dataNode.children, 'proposedAllocation')} Billion`;
     if (lastYearRevenueTotalElement) lastYearRevenueTotalElement.textContent = `£${incomeData.totalRevenue.lastYearActual} Billion`;
-
-    validateTotal(dataNode.children, incomeTotalWarning, 'userAllocation');
-}
-
-function updateAllIncomeCharts(dataNode) {
-    const responsible = dataNode.responsibleBody || dataNode.responsiblePerson || 'N/A';
-    if (justificationElement) justificationElement.textContent = `${responsible}: ${dataNode.justification || 'No justification provided.'}`;
-
-    updateChart(incomeChartInstance, dataNode, 'userAllocation');
-    updateChart(incomeProposalChartInstance, dataNode, 'proposedAllocation');
-    updateChart(incomeLastYearChartInstance, dataNode, 'lastYearActuals');
-
-    updateIncomeTotals(dataNode);
 
     createIncomeInputFields(incomeInputsContainer, dataNode);
 }
