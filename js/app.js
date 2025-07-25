@@ -1,7 +1,4 @@
 // --- Chart Instances ---
-let incomeChartInstance = null;
-let incomeProposalChartInstance = null;
-let incomeLastYearChartInstance = null;
 let userAllocationChartInstance = null;
 let proposalChartInstance = null;
 let lastYearChartInstance = null;
@@ -9,14 +6,12 @@ let userComparisonChartInstance = null;
 let averageComparisonChartInstance = null;
 
 // --- State Variables ---
+let currentIncomeNode = incomeData;
+let incomeNavStack = [incomeData];
 let currentOutgoingNode = outgoingsData;
-let navigationStack = [outgoingsData];
+let spendingNavStack = [outgoingsData];
 
 // --- DOM Elements ---
-// Note: Some elements will only exist on one page.
-const incomeChartCanvas = document.getElementById('incomeChart')?.getContext('2d');
-const incomeProposalChartCanvas = document.getElementById('incomeProposalChart')?.getContext('2d');
-const incomeLastYearChartCanvas = document.getElementById('incomeLastYearChart')?.getContext('2d');
 const userAllocationChartCanvas = document.getElementById('outgoingsChart')?.getContext('2d');
 const proposalChartCanvas = document.getElementById('proposalChart')?.getContext('2d');
 const lastYearChartCanvas = document.getElementById('lastYearChart')?.getContext('2d');
@@ -24,6 +19,7 @@ const lastYearChartCanvas = document.getElementById('lastYearChart')?.getContext
 const incomeInputsContainer = document.getElementById('incomeInputs');
 const outgoingsInputsContainer = document.getElementById('outgoingsInputs');
 const justificationElement = document.getElementById('currentJustification');
+const responsibleEntityElement = document.getElementById('responsibleEntity');
 const breadcrumbElement = document.getElementById('breadcrumb');
 const backButton = document.getElementById('backButton');
 const infoButton = document.getElementById('infoButton');
@@ -37,12 +33,12 @@ const userComparisonCanvas = document.getElementById('userComparisonChart')?.get
 const averageComparisonCanvas = document.getElementById('averageComparisonChart')?.getContext('2d');
 
 const totalAllocatedBar = document.getElementById('totalAllocatedBar');
-const incomeTotalWarning = document.getElementById('incomeTotalWarning');
 const outgoingsTotalWarning = document.getElementById('outgoingsTotalWarning');
 
 const userRevenueTotalElement = document.getElementById('userRevenueTotal');
 const proposalRevenueTotalElement = document.getElementById('proposalRevenueTotal');
 const lastYearRevenueTotalElement = document.getElementById('lastYearRevenueTotal');
+const totalBudgetAllocationElement = document.getElementById('totalBudgetAllocation');
 
 const incomeAdoptProposalButton = document.querySelector('#incomeSection #adoptProposal');
 const incomeResetAllocationButton = document.querySelector('#incomeSection #resetAllocation');
@@ -60,11 +56,20 @@ const baseChartOptions = {
     maintainAspectRatio: false,
     plugins: {
         legend: { position: 'bottom', labels: { boxWidth: 15, padding: 15, font: { size: 11 } } },
-        tooltip: { callbacks: { label: (c) => `${c.label}: ${c.parsed.toFixed(1)}%` } }
+        tooltip: {
+            callbacks: {
+                label: (c) => {
+                    const total = c.dataset.data.reduce((a, b) => a + b, 0);
+                    const percentage = total > 0 ? (c.parsed / total) * 100 : 0;
+                    return `${c.label}: ${percentage.toFixed(1)}%`;
+                }
+            }
+        }
     }
 };
-const userChartOptions = { ...baseChartOptions, onClick: handleChartClick };
+const userChartOptions = { ...baseChartOptions, onClick: handleSpendingChartClick };
 const staticChartOptions = { ...baseChartOptions, onClick: null };
+
 
 // --- Functions ---
 
@@ -81,7 +86,8 @@ function generateColors(count) {
 function createSpendingInputFields(container, dataNode) {
     if (!container) return;
     container.innerHTML = '';
-    dataNode.children.forEach((item, index) => {
+    const children = dataNode.children || [];
+    children.forEach((item, index) => {
         const div = document.createElement('div');
         div.className = 'flex items-center justify-between space-x-2 p-1 hover:bg-gray-50 rounded';
         const responsible = item.responsibleBody || item.responsiblePerson || 'N/A';
@@ -99,51 +105,103 @@ function createSpendingInputFields(container, dataNode) {
             if (newValue > 100) newValue = 100;
             item.userAllocation = newValue;
             e.target.value = newValue.toFixed(1);
-
-            userAllocationChartInstance.data.datasets[0].data[index] = newValue;
-            updateChartWarnings(userAllocationChartInstance, dataNode);
-            userAllocationChartInstance.update();
-            validateTotal(dataNode.children, outgoingsTotalWarning, 'userAllocation');
-            if (dataNode.id === 'national') updateTotalAllocatedBar();
+            updateAllOutgoingCharts(dataNode);
         });
     });
-    validateTotal(dataNode.children, outgoingsTotalWarning, 'userAllocation');
+    updateSpendingTotalDisplay(dataNode);
     if (dataNode.id === 'national') updateTotalAllocatedBar();
 }
 
 function createIncomeInputFields(container, dataNode) {
     if (!container) return;
     container.innerHTML = '';
-    dataNode.children.forEach((item, index) => {
+    const children = dataNode.children || [];
+    children.forEach((item) => {
+        const hasChildren = item.children && item.children.length > 0;
         const div = document.createElement('div');
-        div.className = 'flex items-center justify-between space-x-2 p-1 hover:bg-gray-50 rounded';
-        div.innerHTML = `
-            <label for="${item.id}_input" class="text-gray-700 flex-1 cursor-help" data-tooltip="${item.justification}">${item.name}</label>
-            <input type="number" id="${item.id}_input" value="${item.userAllocation.toFixed(1)}" min="0" max="100" step="0.1" data-index="${index}" class="allocation-input border border-gray-300 rounded px-2 py-1 text-right focus:outline-none focus:ring-1 focus:ring-blue-500">
-            <span class="text-gray-500">%</span>
-        `;
+        div.className = 'p-3 rounded-lg border bg-gray-50 hover:bg-gray-100 transition';
+
+        if (hasChildren) {
+            const revenue = calculateTotalRevenue(item, 'userRate');
+            div.innerHTML = `
+                <div class="flex justify-between items-center cursor-pointer" data-id="${item.id}">
+                    <h4 class="text-lg font-semibold text-blue-700">${item.name}</h4>
+                    <span class="text-lg font-mono bg-blue-100 text-blue-800 px-2 py-1 rounded">£${revenue.toFixed(2)}bn</span>
+                </div>
+                <p class="text-xs text-gray-600 mt-1">${item.justification}</p>
+            `;
+            div.addEventListener('click', () => handleIncomeDrillDown(item));
+        } else {
+            const maxRate = Math.max(item.lastYearRate, item.proposedRate, item.userRate, 30) * 1.2;
+            div.innerHTML = `
+                <div>
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h4 class="font-semibold text-gray-800">${item.name}</h4>
+                            <p class="text-xs text-gray-600" data-tooltip="${item.justification}">${item.responsibleBody}: ${item.justification}</p>
+                        </div>
+                        <input type="number" value="${item.userRate.toFixed(1)}" min="0" max="100" step="0.1" class="allocation-input border border-gray-300 rounded px-2 py-1 text-right w-20 focus:outline-none focus:ring-1 focus:ring-blue-500" data-id="${item.id}">
+                    </div>
+                    <div class="relative mt-4 mb-2 h-6">
+                        <input type="range" min="0" max="${maxRate}" value="${item.userRate}" step="0.1" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer" data-id="${item.id}">
+                        <div class="absolute top-1/2 left-0 w-full h-0 pointer-events-none">
+                            {/* Last Year Marker - Sits above the midline */}
+                            <div class="absolute h-3 w-1 bg-red-500 rounded-full" 
+                                 style="left: ${(item.lastYearRate / maxRate) * 100}%; transform: translate(-50%, -100%);" 
+                                 data-tooltip="Last Year: ${item.lastYearRate}%">
+                            </div>
+                            {/* Proposal Marker - Sits below the midline */}
+                            <div class="absolute h-3 w-1 bg-yellow-500 rounded-full" 
+                                 style="left: ${(item.proposedRate / maxRate) * 100}%; transform: translate(-50%, 0%);" 
+                                 data-tooltip="Proposal: ${item.proposedRate}%">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            const numInput = div.querySelector('input[type="number"]');
+            const rangeInput = div.querySelector('input[type="range"]');
+            numInput.addEventListener('change', (e) => handleRateChange(e, item, rangeInput));
+            rangeInput.addEventListener('input', (e) => handleRateChange(e, item, numInput));
+        }
         container.appendChild(div);
-
-        div.querySelector('input').addEventListener('change', (e) => {
-            let newValue = parseFloat(e.target.value);
-            if (isNaN(newValue) || newValue < 0) newValue = 0;
-            if (newValue > 100) newValue = 100;
-            item.userAllocation = newValue;
-            e.target.value = newValue.toFixed(1);
-
-            // Update the user's chart and totals efficiently
-            incomeChartInstance.data.datasets[0].data[index] = newValue;
-            incomeChartInstance.update();
-            updateIncomeTotals(dataNode);
-        });
     });
 }
 
-function validateTotal(items, warningElement, key) {
-    if (!warningElement) return;
-    const currentTotal = items.reduce((sum, item) => sum + item[key], 0);
-    warningElement.classList.toggle('hidden', Math.abs(currentTotal - 100.0) < 0.01);
-    warningElement.textContent = `Total is ${currentTotal.toFixed(1)}% - Must be 100%`;
+function handleRateChange(event, item, otherInput) {
+    let newValue = parseFloat(event.target.value);
+    if (isNaN(newValue) || newValue < 0) newValue = 0;
+    if (newValue > 100) newValue = 100;
+    item.userRate = newValue;
+    event.target.value = newValue;
+    if(event.type === 'change') otherInput.value = newValue.toFixed(1); // for number input
+    updateAllIncomeCalculations();
+}
+
+function handleIncomeDrillDown(node) {
+    incomeNavStack.push(node);
+    currentIncomeNode = node;
+    updateIncomePage();
+}
+
+function updateSpendingTotalDisplay(dataNode) {
+    if (!outgoingsTotalWarning) return;
+    const currentTotal = (dataNode.children || []).reduce((sum, item) => sum + item.userAllocation, 0);
+    const remainder = 100 - currentTotal;
+
+    if (Math.abs(remainder) < 0.01) {
+        outgoingsTotalWarning.classList.add('hidden');
+    } else if (remainder > 0) {
+        outgoingsTotalWarning.classList.remove('hidden');
+        outgoingsTotalWarning.classList.remove('text-red-600');
+        outgoingsTotalWarning.classList.add('text-gray-600');
+        outgoingsTotalWarning.textContent = `${remainder.toFixed(1)}% is Unallocated (Discretionary)`;
+    } else {
+        outgoingsTotalWarning.classList.remove('hidden');
+        outgoingsTotalWarning.classList.remove('text-gray-600');
+        outgoingsTotalWarning.classList.add('text-red-600');
+        outgoingsTotalWarning.textContent = `Total is ${currentTotal.toFixed(1)}% - Must not exceed 100%`;
+    }
 }
 
 function updateTotalAllocatedBar() {
@@ -157,8 +215,10 @@ function updateTotalAllocatedBar() {
 }
 
 function updateChartWarnings(chartInstance, dataNode) {
+    const children = dataNode.children || [];
     chartInstance.data.datasets[0].borderColor = chartInstance.data.datasets[0].backgroundColor.map((color, index) => {
-        const item = dataNode.children[index];
+        if (index >= children.length) return color; // Handle unallocated slice
+        const item = children[index];
         const warningElement = document.getElementById(`${item.id}_warning`);
         if (!warningElement) return color;
         warningElement.textContent = '';
@@ -173,62 +233,75 @@ function updateChartWarnings(chartInstance, dataNode) {
     chartInstance.data.datasets[0].borderWidth = chartInstance.data.datasets[0].borderColor.map(c => (c === '#dc2626' ? 3 : 1));
 }
 
-function updateChart(chartInstance, dataNode, dataKey) {
-    if (!chartInstance || !dataNode || !dataNode.children) return;
-    chartInstance.data.labels = dataNode.children.map(item => item.name);
-    chartInstance.data.datasets[0] = {
-        data: dataNode.children.map(item => item[dataKey]),
-        backgroundColor: generateColors(dataNode.children.length),
-    };
+function updateChart(chartInstance, labels, data, colors) {
+    if (!chartInstance) return;
+    chartInstance.data.labels = labels;
+    chartInstance.data.datasets[0] = { data, backgroundColor: colors };
     chartInstance.update();
 }
 
 function updateAllOutgoingCharts(dataNode) {
     const responsible = dataNode.responsibleBody || dataNode.responsiblePerson || 'N/A';
     if (justificationElement) justificationElement.textContent = `${responsible}: ${dataNode.justification || 'No justification provided.'}`;
-    if (breadcrumbElement) breadcrumbElement.textContent = `Current Level: ${navigationStack.map(n => n.name).join(' > ')}`;
-    if (backButton) backButton.classList.toggle('hidden', navigationStack.length <= 1);
+    if (breadcrumbElement) breadcrumbElement.textContent = `Current Level: ${spendingNavStack.map(n => n.name).join(' > ')}`;
+    if (backButton) backButton.classList.toggle('hidden', spendingNavStack.length <= 1);
 
-    updateChart(userAllocationChartInstance, dataNode, 'userAllocation');
-    updateChart(proposalChartInstance, dataNode, 'proposedAllocation');
-    updateChart(lastYearChartInstance, dataNode, 'lastYearActualSpending');
+    const children = dataNode.children || [];
+    const userAllocations = children.map(item => item.userAllocation);
+    const proposalAllocations = children.map(item => item.proposedAllocation);
+    const lastYearAllocations = children.map(item => item.lastYearActualSpending);
+    const labels = children.map(item => item.name);
+    const colors = generateColors(children.length + 1); // +1 for unallocated
+
+    const totalUserAllocation = userAllocations.reduce((a, b) => a + b, 0);
+    if (totalUserAllocation < 100) {
+        labels.push('Unallocated');
+        userAllocations.push(100 - totalUserAllocation);
+    }
+
+    updateChart(userAllocationChartInstance, labels, userAllocations, colors);
+    updateChart(proposalChartInstance, dataNode.children.map(c => c.name), proposalAllocations, colors);
+    updateChart(lastYearChartInstance, dataNode.children.map(c => c.name), lastYearAllocations, colors);
+
     updateChartWarnings(userAllocationChartInstance, dataNode);
     userAllocationChartInstance.update();
     createSpendingInputFields(outgoingsInputsContainer, dataNode);
 }
 
-function updateIncomeTotals(dataNode) {
-    // Update total revenue displays
-    const calculateTotalRevenue = (items, key) => {
-        const totalPercentage = items.reduce((sum, item) => sum + item[key], 0);
-        return (incomeData.totalRevenue.base * (totalPercentage / 100)).toFixed(2);
-    };
-
-    if (userRevenueTotalElement) userRevenueTotalElement.textContent = `£${calculateTotalRevenue(dataNode.children, 'userAllocation')} Billion`;
-    if (proposalRevenueTotalElement) proposalRevenueTotalElement.textContent = `£${calculateTotalRevenue(dataNode.children, 'proposedAllocation')} Billion`;
-    if (lastYearRevenueTotalElement) lastYearRevenueTotalElement.textContent = `£${incomeData.totalRevenue.lastYearActual} Billion`;
-
-    validateTotal(dataNode.children, incomeTotalWarning, 'userAllocation');
+function calculateTotalRevenue(node, rateKey) {
+    let total = 0;
+    if (node.children && node.children.length > 0) {
+        node.children.forEach(child => {
+            total += calculateTotalRevenue(child, rateKey);
+        });
+    } else if (node.baseValue) {
+        total += node.baseValue * (node[rateKey] / 100);
+    }
+    return total;
 }
 
-function updateAllIncomeCharts(dataNode) {
-    const responsible = dataNode.responsibleBody || dataNode.responsiblePerson || 'N/A';
-    if (justificationElement) justificationElement.textContent = `${responsible}: ${dataNode.justification || 'No justification provided.'}`;
-
-    updateChart(incomeChartInstance, dataNode, 'userAllocation');
-    updateChart(incomeProposalChartInstance, dataNode, 'proposedAllocation');
-    updateChart(incomeLastYearChartInstance, dataNode, 'lastYearActuals');
-
-    updateIncomeTotals(dataNode);
-
-    createIncomeInputFields(incomeInputsContainer, dataNode);
+function updateAllIncomeCalculations() {
+    if (userRevenueTotalElement) userRevenueTotalElement.textContent = `£${calculateTotalRevenue(incomeData, 'userRate').toFixed(2)} Billion`;
+    if (proposalRevenueTotalElement) proposalRevenueTotalElement.textContent = `£${calculateTotalRevenue(incomeData, 'proposedRate').toFixed(2)} Billion`;
+    if (lastYearRevenueTotalElement) lastYearRevenueTotalElement.textContent = `£${calculateTotalRevenue(incomeData, 'lastYearRate').toFixed(2)} Billion`;
 }
 
-function handleChartClick(event, elements) {
+function updateIncomePage() {
+    const responsible = currentIncomeNode.responsibleBody || currentIncomeNode.responsiblePerson || 'N/A';
+    if (justificationElement) justificationElement.textContent = `${currentIncomeNode.justification || 'No justification provided.'}`;
+    if (responsibleEntityElement) responsibleEntityElement.textContent = responsible;
+    if (breadcrumbElement) breadcrumbElement.textContent = `Current Level: ${incomeNavStack.map(n => n.name).join(' > ')}`;
+    if (backButton) backButton.classList.toggle('hidden', incomeNavStack.length <= 1);
+
+    createIncomeInputFields(incomeInputsContainer, currentIncomeNode);
+    updateAllIncomeCalculations();
+}
+
+function handleSpendingChartClick(event, elements) {
     if (elements.length > 0 && event.chart === userAllocationChartInstance) {
         const clickedNode = currentOutgoingNode.children[elements[0].index];
         if (clickedNode && clickedNode.children && clickedNode.children.length > 0) {
-            navigationStack.push(clickedNode);
+            spendingNavStack.push(clickedNode);
             currentOutgoingNode = clickedNode;
             updateAllOutgoingCharts(currentOutgoingNode);
         }
@@ -236,143 +309,105 @@ function handleChartClick(event, elements) {
 }
 
 // --- Event Listeners ---
-if (backButton) {
-    backButton.addEventListener('click', () => {
-        if (navigationStack.length > 1) {
-            navigationStack.pop();
-            currentOutgoingNode = navigationStack[navigationStack.length - 1];
+function setupEventListeners() {
+    if (backButton) {
+        backButton.addEventListener('click', () => {
+            if (document.getElementById('incomeSection')) {
+                if (incomeNavStack.length > 1) {
+                    incomeNavStack.pop();
+                    currentIncomeNode = incomeNavStack[incomeNavStack.length - 1];
+                    updateIncomePage();
+                }
+            } else {
+                if (spendingNavStack.length > 1) {
+                    spendingNavStack.pop();
+                    currentOutgoingNode = spendingNavStack[spendingNavStack.length - 1];
+                    updateAllOutgoingCharts(currentOutgoingNode);
+                }
+            }
+        });
+    }
+
+    if (spendingAdoptProposalButton) {
+        spendingAdoptProposalButton.addEventListener('click', () => {
+            currentOutgoingNode.children.forEach(child => { child.userAllocation = child.proposedAllocation; });
             updateAllOutgoingCharts(currentOutgoingNode);
-        }
-    });
-}
+        });
+    }
+    if (spendingResetAllocationButton) {
+        spendingResetAllocationButton.addEventListener('click', () => {
+            currentOutgoingNode.children.forEach(child => { child.userAllocation = child.lastYearAllocation; });
+            updateAllOutgoingCharts(currentOutgoingNode);
+        });
+    }
+    if (spendingAssignButton) {
+        spendingAssignButton.addEventListener('click', () => {
+            const total = (outgoingsData.children || []).reduce((sum, item) => sum + item.userAllocation, 0);
+            if (total > 100.01) {
+                 alert("Please ensure total spending does not exceed 100% before assigning.");
+            } else {
+                alert("Spending Budget Assigned (Simulation)!\nYour proposed allocations have been recorded.");
+                if (compareButton) compareButton.click();
+            }
+        });
+    }
 
-// Spending Page Buttons
-if (spendingAdoptProposalButton) {
-    spendingAdoptProposalButton.addEventListener('click', () => {
-        currentOutgoingNode.children.forEach(child => { child.userAllocation = child.proposedAllocation; });
-        updateAllOutgoingCharts(currentOutgoingNode);
-    });
-}
-
-if (spendingResetAllocationButton) {
-    spendingResetAllocationButton.addEventListener('click', () => {
-        currentOutgoingNode.children.forEach(child => { child.userAllocation = child.lastYearAllocation; });
-        updateAllOutgoingCharts(currentOutgoingNode);
-    });
-}
-
-if (spendingAssignButton) {
-    spendingAssignButton.addEventListener('click', () => {
-        const outgoingsValid = validateTotal(outgoingsData.children, outgoingsTotalWarning, 'userAllocation');
-        if (outgoingsValid) {
-            alert("Spending Budget Assigned (Simulation)!\nYour proposed allocations have been recorded.");
-            // Optionally trigger comparison view
-            if (compareButton) compareButton.click();
-        } else {
-            alert("Please ensure total spending is 100% before assigning.");
-        }
-    });
-}
-
-if (spendingCompareButton) {
-    spendingCompareButton.addEventListener('click', () => {
-        if (comparisonSection) comparisonSection.classList.remove('hidden');
-        const userTopLevelData = {
-            labels: outgoingsData.children.map(item => item.name),
-            datasets: [{
-                label: 'Your Allocation',
-                data: outgoingsData.children.map(item => item.userAllocation),
-                backgroundColor: generateColors(outgoingsData.children.length)
-            }]
+    if (incomeAdoptProposalButton) {
+        const adopt = (node) => {
+            if (node.children && node.children.length > 0) node.children.forEach(adopt);
+            else if (node.hasOwnProperty('userRate')) node.userRate = node.proposedRate;
         };
-        const averageTopLevelData = {
-            labels: publicAverageData.map(item => item.name),
-            datasets: [{
-                label: 'Public Average',
-                data: publicAverageData.map(item => item.value),
-                backgroundColor: generateColors(publicAverageData.length)
-            }]
+        incomeAdoptProposalButton.addEventListener('click', () => {
+            adopt(incomeData);
+            updateIncomePage();
+        });
+    }
+    if (incomeResetAllocationButton) {
+        const reset = (node) => {
+            if (node.children && node.children.length > 0) node.children.forEach(reset);
+            else if (node.hasOwnProperty('userRate')) node.userRate = node.lastYearRate;
         };
+        incomeResetAllocationButton.addEventListener('click', () => {
+            reset(incomeData);
+            updateIncomePage();
+        });
+    }
+    if (incomeAssignButton) {
+        incomeAssignButton.addEventListener('click', () => {
+            const totalRevenue = calculateTotalRevenue(incomeData, 'userRate');
+            localStorage.setItem('nationalBudget', totalRevenue.toFixed(2));
+            alert(`Income Plan Submitted!\n\nTotal Estimated Revenue: £${totalRevenue.toFixed(2)} Billion.\nThis will now be your budget on the spending page.`);
+        });
+    }
 
-        if (userComparisonChartInstance) userComparisonChartInstance.destroy();
-        if (averageComparisonChartInstance) averageComparisonChartInstance.destroy();
-
-        if (userComparisonCanvas) userComparisonChartInstance = new Chart(userComparisonCanvas, { type: 'doughnut', data: userTopLevelData, options: baseChartOptions });
-        if (averageComparisonCanvas) averageComparisonChartInstance = new Chart(averageComparisonCanvas, { type: 'doughnut', data: averageTopLevelData, options: baseChartOptions });
-
-        if (comparisonSection) comparisonSection.scrollIntoView({ behavior: 'smooth' });
-    });
+    if (infoButton) infoButton.addEventListener('click', () => infoSidebar.classList.remove('translate-x-full'));
+    if (closeSidebarButton) closeSidebarButton.addEventListener('click', () => infoSidebar.classList.add('translate-x-full'));
+    if (sidebarOverlay) sidebarOverlay.addEventListener('click', () => infoSidebar.classList.add('translate-x-full'));
 }
-
-// Income Page Buttons
-if (incomeAdoptProposalButton) {
-    incomeAdoptProposalButton.addEventListener('click', () => {
-        incomeData.children.forEach(child => { child.userAllocation = child.proposedAllocation; });
-        updateAllIncomeCharts(incomeData);
-    });
-}
-
-if (incomeResetAllocationButton) {
-    incomeResetAllocationButton.addEventListener('click', () => {
-        incomeData.children.forEach(child => { child.userAllocation = child.lastYearAllocation; });
-        updateAllIncomeCharts(incomeData);
-    });
-}
-
-if (incomeAssignButton) {
-    incomeAssignButton.addEventListener('click', () => {
-        const incomeValid = validateTotal(incomeData.children, incomeTotalWarning, 'userAllocation');
-        if (incomeValid) {
-            alert("Income Plan Submitted (Simulation)!\nYour proposed tax allocations have been recorded.");
-        } else {
-            alert("Please ensure total income percentages are 100% before submitting.");
-        }
-    });
-}
-
-
-// --- Sidebar Logic ---
-if (infoButton) {
-    infoButton.addEventListener('click', () => {
-        if (infoSidebar) infoSidebar.classList.remove('translate-x-full');
-        if (sidebarOverlay) sidebarOverlay.classList.remove('hidden');
-    });
-}
-
-function closeInfoSidebar() {
-    if (infoSidebar) infoSidebar.classList.add('translate-x-full');
-    if (sidebarOverlay) sidebarOverlay.classList.add('hidden');
-}
-if (closeSidebarButton) closeSidebarButton.addEventListener('click', closeInfoSidebar);
-if (sidebarOverlay) sidebarOverlay.addEventListener('click', closeInfoSidebar);
-
 
 // --- Initialization ---
 document.addEventListener('DOMContentLoaded', () => {
-    setTimeout(() => {
-        try {
-            // Initialize Spending Page Charts
-            if (userAllocationChartCanvas) {
-                userAllocationChartInstance = new Chart(userAllocationChartCanvas, { type: 'pie', data: {}, options: userChartOptions });
-                proposalChartInstance = new Chart(proposalChartCanvas, { type: 'pie', data: {}, options: staticChartOptions });
-                lastYearChartInstance = new Chart(lastYearChartCanvas, { type: 'pie', data: {}, options: staticChartOptions });
-                updateAllOutgoingCharts(currentOutgoingNode);
-            }
+    try {
+        if (document.getElementById('outgoingsSection')) {
+            const budget = localStorage.getItem('nationalBudget') || '459.50'; // Default if not set
+            if (totalBudgetAllocationElement) totalBudgetAllocationElement.textContent = `£${budget} Billion`;
 
-            // Initialize Income Page Charts
-            if (incomeChartCanvas) {
-                incomeChartInstance = new Chart(incomeChartCanvas, { type: 'doughnut', data: {}, options: userChartOptions });
-                incomeProposalChartInstance = new Chart(incomeProposalChartCanvas, { type: 'doughnut', data: {}, options: staticChartOptions });
-                incomeLastYearChartInstance = new Chart(incomeLastYearChartCanvas, { type: 'doughnut', data: {}, options: staticChartOptions });
-                updateAllIncomeCharts(incomeData);
-            }
-
-            console.log("Charts initialized successfully.");
-        } catch (error) {
-            console.error("Error initializing charts:", error);
-            // Display error message to user if elements exist
-            if (outgoingsInputsContainer) outgoingsInputsContainer.innerHTML = '<p class="text-red-600 font-semibold">Error loading charts. Please check the data file and console.</p>';
-            if (incomeInputsContainer) incomeInputsContainer.innerHTML = '<p class="text-red-600 font-semibold">Error loading charts. Please check the data file and console.</p>';
+            userAllocationChartInstance = new Chart(userAllocationChartCanvas, { type: 'pie', data: {}, options: userChartOptions });
+            proposalChartInstance = new Chart(proposalChartCanvas, { type: 'pie', data: {}, options: staticChartOptions });
+            lastYearChartInstance = new Chart(lastYearChartCanvas, { type: 'pie', data: {}, options: staticChartOptions });
+            updateAllOutgoingCharts(currentOutgoingNode);
         }
-    }, 0);
+
+        if (document.getElementById('incomeSection')) {
+            updateIncomePage();
+        }
+
+        setupEventListeners();
+        console.log("Pages initialized successfully.");
+    } catch (error) {
+        console.error("Error initializing pages:", error);
+        const errorMsg = '<p class="text-red-600 font-semibold">Error loading dynamic content. Please check the data file and console.</p>';
+        if (outgoingsInputsContainer) outgoingsInputsContainer.innerHTML = errorMsg;
+        if (incomeInputsContainer) incomeInputsContainer.innerHTML = errorMsg;
+    }
 });

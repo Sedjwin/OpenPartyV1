@@ -1,22 +1,118 @@
 // --- Data Definitions ---
 
 const incomeData = {
+    id: 'national_income',
     name: "National Income Sources",
     responsiblePerson: "The Chancellor of the Exchequer",
-    justification: "This is our proposed plan for raising national revenue. Your allocation will determine our focus, whether on personal earnings, business profits, or sales tax.",
-    totalRevenue: {
-        base: 1000, // Base revenue in Billions (£)
-        lastYearActual: 1050,
-        proposed: 1100,
-    },
+    justification: "The UK's revenue is a complex tapestry of different taxes. Below are the main categories. Click into any of them to see the detail and set the specific rates that will build our national budget.",
     children: [
-        { id: 'income_tax', name: 'Income Tax', lastYearAllocation: 40, proposedAllocation: 42, lastYearActuals: 41, userAllocation: 40, justification: "Tax on salaries and wages. We propose a slight increase to fund public services.", responsibleBody: "HM Treasury" },
-        { id: 'vat', name: 'VAT (Sales Tax)', lastYearAllocation: 30, proposedAllocation: 30, lastYearActuals: 29, userAllocation: 30, justification: "Tax on goods and services. We are holding this steady.", responsibleBody: "HM Treasury" },
-        { id: 'corp_tax', name: 'Corporation Tax', lastYearAllocation: 15, proposedAllocation: 12, lastYearActuals: 16, userAllocation: 15, justification: "We propose a cut to make the UK more attractive for businesses.", responsibleBody: "HM Treasury" },
-        { id: 'nat_ins', name: 'National Insurance', lastYearAllocation: 10, proposedAllocation: 11, lastYearActuals: 10, userAllocation: 10, justification: "A contribution that primarily funds the NHS and state pensions.", responsibleBody: "HM Treasury" },
-        { id: 'other_tax', name: 'Other Taxes', lastYearAllocation: 5, proposedAllocation: 5, lastYearActuals: 4, userAllocation: 5, justification: "A mix of smaller taxes like fuel duty, alcohol duty, and capital gains.", responsibleBody: "HM Treasury" },
+        {
+            id: 'individual_taxes',
+            name: 'Taxes on Individuals',
+            responsibleBody: "HM Treasury - Personal Tax Directorate",
+            justification: "These are taxes paid directly by individuals, including what you pay on your earnings, assets, and inheritance. They represent the largest portion of government revenue.",
+            children: [
+                {
+                    id: 'income_tax',
+                    name: 'Income Tax',
+                    responsibleBody: "Ms. Penny Wages, Head of Personal Taxation",
+                    justification: "Income tax is the government's single largest source of funds. We must balance raising revenue with ensuring work pays. My proposal includes a slight rise to fund public services.",
+                    children: [
+                        { id: 'paye', name: 'Employment Income (PAYE)', baseValue: 1300, lastYearRate: 20, proposedRate: 21, userRate: 20, responsibleBody: "PAYE Operations Unit", justification: "The tax automatically deducted from most employees' paychecks. A 1% change here has a huge impact on revenue." },
+                        { id: 'self_employed', name: 'Self-Employed Income', baseValue: 250, lastYearRate: 20, proposedRate: 20, userRate: 20, responsibleBody: "Mr. Ian Voice, Small Business Champion", justification: "We believe the main income tax rate for the self-employed should be held steady to encourage entrepreneurship." },
+                        { id: 'pension_income', name: 'Pension Income', baseValue: 150, lastYearRate: 10, proposedRate: 10, userRate: 10, responsibleBody: "Retirement Planning Office", justification: "Tax on income from private pensions. We propose no changes to this sensitive area." },
+                        { id: 'savings_income', name: 'Savings Income', baseValue: 80, lastYearRate: 15, proposedRate: 15, userRate: 15, responsibleBody: "Wealth & Savings Unit", justification: "Tax on interest earned from savings. The current rate provides a fair return to the Treasury." },
+                        { id: 'dividend_income', name: 'Dividend Income', baseValue: 60, lastYearRate: 8.75, proposedRate: 10, userRate: 8.75, responsibleBody: "Investment Taxation Board", justification: "We propose a small increase in the tax on dividends to bring it more in line with income tax rates." },
+                        { id: 'property_income', name: 'Property Income', baseValue: 50, lastYearRate: 20, proposedRate: 20, userRate: 20, responsibleBody: "Landlord & Tenant Revenue Service", justification: "Tax on rental income. We recommend holding this at the basic rate of income tax." }
+                    ]
+                },
+                {
+                    id: 'nics',
+                    name: 'National Insurance Contributions',
+                    responsibleBody: "Ms. Connie Tribution, Director of Social Security",
+                    justification: "NICs primarily fund the NHS, state pensions, and other benefits. These are separate from Income Tax and paid by both employees and employers.",
+                    children: [
+                        { id: 'nic_class1', name: 'Class 1 (Employees)', baseValue: 900, lastYearRate: 12, proposedRate: 12, userRate: 12, responsibleBody: "NIC Operations", justification: "Paid by employees earning above a certain threshold. We propose no change." },
+                        { id: 'nic_class4', name: 'Class 4 (Self-Employed)', baseValue: 150, lastYearRate: 9, proposedRate: 9, userRate: 9, responsibleBody: "NIC Operations", justification: "Paid by the self-employed on their profits. We propose no change." }
+                    ]
+                },
+                {
+                    id: 'cgt',
+                    name: 'Capital Gains Tax',
+                    responsibleBody: "Mr. Alistair Setts, Head of Capital Taxation",
+                    justification: "A tax on the profit when you sell something that has increased in value. It's about ensuring wealth is taxed, not just income.",
+                    children: [
+                        { id: 'cgt_property', name: 'Residential Property', baseValue: 40, lastYearRate: 28, proposedRate: 30, userRate: 28, responsibleBody: "Property Gains Unit", justification: "Profit from selling a second home or buy-to-let property is taxed at a higher rate. We propose a small increase." },
+                        { id: 'cgt_other', name: 'Other Assets (Shares, etc)', baseValue: 30, lastYearRate: 20, proposedRate: 20, userRate: 20, responsibleBody: "Asset Gains Unit", justification: "Profit from selling other assets like shares. We propose holding the rate steady." }
+                    ]
+                },
+                { id: 'iht', name: 'Inheritance Tax', baseValue: 7, lastYearRate: 40, proposedRate: 40, userRate: 40, responsibleBody: "The Office of Final Accounts", justification: "A tax on the estate of someone who has passed away, above a certain threshold. It is controversial but raises important funds. We propose no change to the headline rate." }
+            ]
+        },
+        {
+            id: 'business_taxes',
+            name: 'Taxes on Businesses',
+            responsibleBody: "HM Treasury - Business & Trade Directorate",
+            justification: "Taxes paid by companies and other business entities. These affect the business climate and investment in the UK.",
+            children: [
+                {
+                    id: 'corp_tax',
+                    name: 'Corporation Tax',
+                    responsibleBody: "Mr. Rich Coffers, Director of Corporate Revenue",
+                    justification: "This is the tax on company profits. My department's proposal is to lower the main rate to make the UK the most competitive business environment in Europe.",
+                    children: [
+                        { id: 'corp_main_rate', name: 'Main Rate', baseValue: 400, lastYearRate: 25, proposedRate: 23, userRate: 25, responsibleBody: "Corporate Revenue Service", justification: "The headline rate of tax on profits for most companies." },
+                        { id: 'corp_ring_fence', name: 'Ring Fence (Oil & Gas)', baseValue: 15, lastYearRate: 40, proposedRate: 40, userRate: 40, responsibleBody: "Energy Profits Levy Unit", justification: "A higher rate for oil and gas extraction profits from the UK and North Sea." },
+                        { id: 'corp_bank_surcharge', name: 'Bank Surcharge', baseValue: 8, lastYearRate: 3, proposedRate: 3, userRate: 3, responsibleBody: "Financial Services Revenue", justification: "An additional tax on the profits of banks, on top of the main corporation tax rate." }
+                    ]
+                },
+                { id: 'business_rates', name: 'Business Rates (NNDR)', baseValue: 25, lastYearRate: 51, proposedRate: 51, userRate: 51, responsibleBody: "Valuation Office Agency", justification: "A tax on the occupation of non-domestic property. It's complex, but we're treating it as a single rate here for simplicity." }
+            ]
+        },
+        {
+            id: 'indirect_taxes',
+            name: 'Indirect Taxes',
+            responsibleBody: "HM Revenue & Customs",
+            justification: "These are taxes on spending, paid by consumers and businesses, often without being listed separately on a receipt. This includes VAT and various duties.",
+            children: [
+                {
+                    id: 'vat',
+                    name: 'Value Added Tax (VAT)',
+                    responsibleBody: "Ms. Vera A. Tility, Head of VAT Policy",
+                    justification: "VAT is applied to a huge range of goods and services. My department's proposal is to hold the standard rate steady, as it's a reliable source of revenue.",
+                    children: [
+                        { id: 'vat_standard', name: 'Standard Rate', baseValue: 700, lastYearRate: 20, proposedRate: 20, userRate: 20, responsibleBody: "Standard Rate VAT Unit", justification: "The main rate of VAT applied to most goods and services." },
+                        { id: 'vat_fish', name: 'The Price of Fish', baseValue: 10, lastYearRate: 20, proposedRate: 20, userRate: 20, responsibleBody: "Mr. Finlay 'Finn' C. Adviser", justification: "Hot takeaway food, like our beloved fish and chips, is subject to the standard rate of VAT. Some say it should be reduced to help the hospitality sector. I say, the nation's demand for cod is inelastic!" },
+                        { id: 'vat_reduced', name: 'Reduced Rate', baseValue: 40, lastYearRate: 5, proposedRate: 5, userRate: 5, responsibleBody: "Reduced Rate VAT Unit", justification: "A lower rate of VAT for items like domestic fuel and power, and children's car seats." }
+                    ]
+                },
+                {
+                    id: 'excise_duties',
+                    name: 'Excise Duties',
+                    responsibleBody: "Duty & Tariffs Command",
+                    justification: "These are 'sin taxes' or duties on specific goods or activities, designed to discourage certain behaviours as well as raise revenue.",
+                    children: [
+                        { id: 'fuel_duty', name: 'Fuel Duty', baseValue: 25, lastYearRate: 53, proposedRate: 50, userRate: 53, responsibleBody: "Mr. Miles Per-Gallon", justification: "A per-litre tax on petrol and diesel. My proposal is to cut this to help with the cost of living, but the Treasury warns this will leave a significant hole in the budget." },
+                        { id: 'tobacco_duty', name: 'Tobacco Duty', baseValue: 9, lastYearRate: 16.5, proposedRate: 20, userRate: 16.5, responsibleBody: "Mr. Ashworth Coughlan", justification: "A tax on cigarettes and tobacco. My proposal is to hike this significantly every year to make smoking unaffordable and fund smoking cessation programs." },
+                        { id: 'alcohol_duty', name: 'Alcohol Duty', baseValue: 12, lastYearRate: 9, proposedRate: 9, userRate: 9, responsibleBody: "Ms. Ginny Tonic", justification: "A tax on beer, wine, and spirits. My proposal is to keep this in line with inflation to ensure it remains a stable source of revenue." },
+                        { id: 'gambling_duties', name: 'Gambling Duties', baseValue: 3, lastYearRate: 15, proposedRate: 15, userRate: 15, responsibleBody: "The Betting & Gaming Council", justification: "A tax on the profits of gambling companies. We propose holding this steady." }
+                    ]
+                },
+                { id: 'stamp_duty_shares', name: 'Stamp Duty (Shares)', baseValue: 4, lastYearRate: 0.5, proposedRate: 0.5, userRate: 0.5, responsibleBody: "Securities & Transactions Office", justification: "A small tax on the purchase of shares. It's a small but important source of revenue from the financial markets." }
+            ]
+        },
+        {
+            id: 'local_taxes',
+            name: 'Local Taxes',
+            responsibleBody: "Department for Levelling Up, Housing and Communities",
+            justification: "Taxes collected locally to fund local services like bin collection, libraries, and parks.",
+            children: [
+                { id: 'council_tax', name: 'Council Tax', baseValue: 35, lastYearRate: 5, proposedRate: 5, userRate: 5, responsibleBody: "Cllr. Evelyn Parish", justification: "This is a property tax that funds local services. The 'rate' here represents the average annual percentage increase. My proposal is for a 5% rise to avoid cuts to essential local services." }
+            ]
+        }
     ]
 };
+
 
 const outgoingsData = {
     id: 'national',
