@@ -1,3 +1,164 @@
+const sidebarContent = document.getElementById('sidebarContent');
+
+// --- Sidebar Content ---
+const sidebarNarratives = {
+    'national': `
+        <p class="mb-3">This is the highest level of the budget. Here, you are deciding the top-level funding for each major government department. The total amount available is determined by the tax rates you set on the 'National Income' page.</p>
+        <h4 class="font-bold mt-4 mb-2">Your Actions:</h4>
+        <ul class="list-disc list-inside space-y-1">
+            <li><strong>Set Percentages:</strong> Use the input fields to directly allocate funds to each department.</li>
+            <li><strong>Drill Down:</strong> Click a pie chart slice (e.g., 'Healthcare') to manage that department's internal budget.</li>
+            <li><strong>Adopt Proposal:</strong> Click to accept the government's proposed budget for this national level.</li>
+            <li><strong>Leave Discretionary Funds:</strong> Any unallocated percentage will be left to the discretion of the Prime Minister's office.</li>
+        </ul>
+        <div class="mt-4 p-3 bg-yellow-100 border border-yellow-300 rounded-lg">
+            <h5 class="font-bold text-yellow-800">Follow the Story</h5>
+            <p class="text-sm text-yellow-700">This demo contains two key examples. To see them, click on either <strong>'Healthcare'</strong> or <strong>'Education'</strong> and follow the instructions in this box.</p>
+        </div>
+    `,
+    'health': `
+        <p class="mb-3">You are now managing the budget for <strong>Healthcare</strong>. The justification for the proposed budget is shown on the main page.</p>
+        <h4 class="font-bold mt-4 mb-2">Your Actions:</h4>
+        <ul class="list-disc list-inside space-y-1">
+            <li><strong>Set Allocations:</strong> Use the inputs to divide the Healthcare budget.</li>
+            <li><strong>Adopt Proposal:</strong> Click to accept the Health Secretary's proposal for this level.</li>
+            <li><strong>Drill Down:</strong> Click a pie slice to go deeper.</li>
+            <li><strong>Go Back:</strong> Click the 'Back' button to return to the National level.</li>
+        </ul>
+        <div class="mt-4 p-3 bg-yellow-100 border border-yellow-300 rounded-lg">
+            <h5 class="font-bold text-yellow-800">Story Guide &rarr; The Mismanaged Hospital</h5>
+            <p class="text-sm text-yellow-700">To continue, click on the <strong>'NHS England Operations'</strong> slice in the pie chart.</p>
+        </div>
+    `,
+    'nhs_england': `
+        <p class="mb-3">You are looking at the core operations budget for <strong>NHS England</strong>.</p>
+        <h4 class="font-bold mt-4 mb-2">Your Actions:</h4>
+        <ul class="list-disc list-inside space-y-1">
+            <li><strong>Set Allocations:</strong> Divide the budget between Hospitals, GPs, Mental Health, etc.</li>
+            <li><strong>Adopt Proposal:</strong> Accept the NHS Executive's proposal for this level.</li>
+            <li><strong>Drill Down:</strong> Click a pie slice to continue.</li>
+            <li><strong>Go Back:</strong> Click 'Back' to return to the main Healthcare budget.</li>
+        </ul>
+        <div class="mt-4 p-3 bg-yellow-100 border border-yellow-300 rounded-lg">
+            <h5 class="font-bold text-yellow-800">Story Guide &rarr; The Mismanaged Hospital</h5>
+            <p class="text-sm text-yellow-700">Next, click on the <strong>'Hospitals & Acute Care'</strong> slice.</p>
+        </div>
+    `,
+    'acute_care': `
+        <p class="mb-3">You are managing the <strong>Hospitals & Acute Care</strong> budget, which covers all hospital trusts.</p>
+        <h4 class="font-bold mt-4 mb-2">Your Actions:</h4>
+        <ul class="list-disc list-inside space-y-1">
+            <li><strong>Set Allocations:</strong> Divide the budget between different hospital trusts.</li>
+            <li><strong>Adopt Proposal:</strong> Accept the Acute Care Directorate's proposal.</li>
+            <li><strong>Drill Down:</strong> Click a pie slice to see a specific hospital's budget.</li>
+            <li><strong>Go Back:</strong> Click 'Back' to return to the NHS England budget.</li>
+        </ul>
+        <div class="mt-4 p-3 bg-yellow-100 border border-yellow-300 rounded-lg">
+            <h5 class="font-bold text-yellow-800">Story Guide &rarr; The Mismanaged Hospital</h5>
+            <p class="text-sm text-yellow-700">You're almost there! Click on the <strong>'BadExample Hospital Trust'</strong> slice to see the problem.</p>
+        </div>
+    `,
+    'bad_hospital': `
+        <h4 class="font-bold mb-2">Story: Exposing Mismanagement</h4>
+        <p class="mb-3">You've found <strong>BadExample Hospital Trust</strong>. Notice how 'Last Year's Actual' spending on the main page shows a huge overspend. By looking at the detailed breakdown, you can see that while 'Patient Care' was underfunded, <strong>60%</strong> of the hospital's money was spent on 'Executive Logistics & Travel' for things like private jets.</p>
+        <h4 class="font-bold mt-4 mb-2">Your Actions:</h4>
+        <ul class="list-disc list-inside space-y-1">
+            <li><strong>Correct the budget:</strong> Use the inputs to fully fund 'Patient Care' and cut the 'Executive Logistics' budget.</li>
+            <li><strong>Read Justifications:</strong> Hover over the names on the main page to read the managers' excuses.</li>
+            <li><strong>Go Back:</strong> Click 'Back' to return to the Acute Care budget.</li>
+        </ul>
+    `,
+    'education': `
+        <p class="mb-3">You are now managing the budget for <strong>Education</strong>.</p>
+        <h4 class="font-bold mt-4 mb-2">Your Actions:</h4>
+        <ul class="list-disc list-inside space-y-1">
+            <li><strong>Set Allocations:</strong> Divide the Education budget between Schools, Higher Education, etc.</li>
+            <li><strong>Adopt Proposal:</strong> Click to accept the Education Secretary's proposal for this level.</li>
+            <li><strong>Drill Down:</strong> Click a pie slice to go deeper.</li>
+            <li><strong>Go Back:</strong> Click 'Back' to return to the National level.</li>
+        </ul>
+        <div class="mt-4 p-3 bg-yellow-100 border border-yellow-300 rounded-lg">
+            <h5 class="font-bold text-yellow-800">Story Guide &rarr; The School in Need</h5>
+            <p class="text-sm text-yellow-700">To continue, click on the <strong>'Schools (5-18)'</strong> slice in the pie chart.</p>
+        </div>
+    `,
+    'primary_secondary': `
+        <p class="mb-3">You are managing the budget for all <strong>Schools (5-18)</strong> in the country.</p>
+        <h4 class="font-bold mt-4 mb-2">Your Actions:</h4>
+        <ul class="list-disc list-inside space-y-1">
+            <li><strong>Set Allocations:</strong> Divide the budget between different school areas.</li>
+            <li><strong>Adopt Proposal:</strong> Accept the Schools Funding Agency's proposal.</li>
+            <li><strong>Drill Down:</strong> Click a pie slice to see a specific area's school budget.</li>
+            <li><strong>Go Back:</strong> Click 'Back' to return to the main Education budget.</li>
+        </ul>
+        <div class="mt-4 p-3 bg-yellow-100 border border-yellow-300 rounded-lg">
+            <h5 class="font-bold text-yellow-800">Story Guide &rarr; The School in Need</h5>
+            <p class="text-sm text-yellow-700">Next, click on the <strong>'Exampletown Area Schools'</strong> slice.</p>
+        </div>
+    `,
+    'exampletown_schools': `
+        <p class="mb-3">You are managing the budget for all schools in the <strong>Exampletown Area</strong>.</p>
+        <h4 class="font-bold mt-4 mb-2">Your Actions:</h4>
+        <ul class="list-disc list-inside space-y-1">
+            <li><strong>Set Allocations:</strong> Divide the budget between the schools in this area.</li>
+            <li><strong>Adopt Proposal:</strong> Accept the local Education Board's proposal.</li>
+            <li><strong>Drill Down:</strong> Click a pie slice to see a specific school's budget.</li>
+            <li><strong>Go Back:</strong> Click 'Back' to return to the main Schools budget.</li>
+        </ul>
+        <div class="mt-4 p-3 bg-yellow-100 border border-yellow-300 rounded-lg">
+            <h5 class="font-bold text-yellow-800">Story Guide &rarr; The School in Need</h5>
+            <p class="text-sm text-yellow-700">You're almost there! Click on the <strong>'St. Unknown School'</strong> slice to see the problem.</p>
+        </div>
+    `,
+    'st_unknown': `
+        <h4 class="font-bold mb-2">Story: A Desperate Choice</h4>
+        <p class="mb-3">You are looking at <strong>St. Unknown School</strong>, which faces a crisis. The head teacher's justification explains the school's roof is unsafe and requires a huge portion of the budget. This forces a drastic cut to the 'Supplies & Resources' budget, leaving no money for textbooks.</p>
+        <h4 class="font-bold mt-4 mb-2">Your Actions:</h4>
+        <ul class="list-disc list-inside space-y-1">
+            <li><strong>Face the Dilemma:</strong> Allocate the funds. Do you fix the roof or buy textbooks?</li>
+            <li><strong>Read the Warnings:</strong> Note the red warning text that appears if you underfund an area.</li>
+            <li><strong>Rethink Higher Levels:</strong> This dilemma might make you go back to the 'National' level and increase the overall 'Education' budget.</li>
+        </ul>
+    `,
+    'default': `
+        <p class="mb-3">You are now managing the budget for <strong>{{NODE_NAME}}</strong>. The justification for the proposed budget is shown on the main page, provided by the person or body responsible for this area.</p>
+        <h4 class="font-bold mt-4 mb-2">Your Actions:</h4>
+        <ul class="list-disc list-inside space-y-1">
+            <li><strong>Set Allocations:</strong> Use the inputs to divide this area's budget among its sub-categories.</li>
+            <li><strong>Adopt Proposal:</strong> Click to accept the proposal for this level.</li>
+            <li><strong>Leave Discretionary Funds:</strong> You can leave a portion unallocated for the manager of this level to use.</li>
+            <li><strong>Drill Down:</strong> Click a pie slice to go deeper, if possible.</li>
+            <li><strong>Go Back:</strong> Click the 'Back' button to return to the previous level.</li>
+        </ul>
+    `
+};
+
+function updateSidebarContent() {
+    if (!sidebarContent) return;
+
+    let narrative = sidebarNarratives.default;
+    if (sidebarNarratives[currentOutgoingNode.id]) {
+        narrative = sidebarNarratives[currentOutgoingNode.id];
+    }
+    
+    narrative = narrative.replace('{{NODE_NAME}}', currentOutgoingNode.name);
+
+    sidebarContent.innerHTML = narrative;
+}
+
+function toggleSidebar(isOpen) {
+    if (!infoSidebar || !sidebarOverlay) return;
+    if (isOpen) {
+        infoSidebar.classList.remove('translate-x-full');
+        sidebarOverlay.classList.remove('opacity-0', 'pointer-events-none');
+        sidebarOverlay.classList.add('opacity-50');
+    } else {
+        infoSidebar.classList.add('translate-x-full');
+        sidebarOverlay.classList.add('opacity-0', 'pointer-events-none');
+        sidebarOverlay.classList.remove('opacity-50');
+    }
+}
+
 // --- Chart Instances ---
 let userAllocationChartInstance = null;
 let proposalChartInstance = null;
@@ -286,6 +447,7 @@ function updateAllOutgoingCharts(dataNode) {
     updateChartWarnings(userAllocationChartInstance, dataNode);
     userAllocationChartInstance.update();
     createSpendingInputFields(outgoingsInputsContainer, dataNode);
+    updateSidebarContent();
 }
 
 function calculateTotalRevenue(node, rateKey) {
@@ -400,9 +562,9 @@ function setupEventListeners() {
         });
     }
 
-    if (infoButton) infoButton.addEventListener('click', () => infoSidebar.classList.remove('translate-x-full'));
-    if (closeSidebarButton) closeSidebarButton.addEventListener('click', () => infoSidebar.classList.add('translate-x-full'));
-    if (sidebarOverlay) sidebarOverlay.addEventListener('click', () => infoSidebar.classList.add('translate-x-full'));
+    if (infoButton) infoButton.addEventListener('click', () => toggleSidebar(true));
+    if (closeSidebarButton) closeSidebarButton.addEventListener('click', () => toggleSidebar(false));
+    if (sidebarOverlay) sidebarOverlay.addEventListener('click', () => toggleSidebar(false));
 }
 
 // --- Initialization ---
