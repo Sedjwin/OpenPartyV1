@@ -133,6 +133,7 @@ function createIncomeInputFields(container, dataNode) {
             div.addEventListener('click', () => handleIncomeDrillDown(item));
         } else {
             const maxRate = Math.max(item.lastYearRate, item.proposedRate, item.userRate, 30) * 1.2;
+            const individualRevenue = item.baseValue * (item.userRate / 100);
             div.innerHTML = `
                 <div>
                     <div class="flex justify-between items-start">
@@ -140,19 +141,20 @@ function createIncomeInputFields(container, dataNode) {
                             <h4 class="font-semibold text-gray-800">${item.name}</h4>
                             <p class="text-xs text-gray-600" data-tooltip="${item.justification}">${item.responsibleBody}: ${item.justification}</p>
                         </div>
-                        <input type="number" value="${item.userRate.toFixed(1)}" min="0" max="100" step="0.1" class="allocation-input border border-gray-300 rounded px-2 py-1 text-right w-20 focus:outline-none focus:ring-1 focus:ring-blue-500" data-id="${item.id}">
+                        <div class="text-right flex-shrink-0 ml-4">
+                             <input type="number" value="${item.userRate.toFixed(1)}" min="0" max="100" step="0.1" class="allocation-input border border-gray-300 rounded px-2 py-1 text-right w-24 focus:outline-none focus:ring-1 focus:ring-blue-500" data-id="${item.id}">
+                             <p class="text-sm font-mono text-green-700" id="revenue_${item.id}">£${individualRevenue.toFixed(2)}bn</p>
+                        </div>
                     </div>
                     <div class="relative mt-4 mb-2 h-6">
                         <input type="range" min="0" max="${maxRate}" value="${item.userRate}" step="0.1" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer" data-id="${item.id}">
-                        <div class="absolute top-1/2 left-0 w-full h-0 pointer-events-none">
-                            {/* Last Year Marker - Sits above the midline */}
-                            <div class="absolute h-3 w-1 bg-red-500 rounded-full" 
-                                 style="left: ${(item.lastYearRate / maxRate) * 100}%; transform: translate(-50%, -100%);" 
+                        <div class="absolute top-1/2 left-0 w-full h-0">
+                            <div class="absolute h-4 w-1 bg-red-500 rounded-full transform -translate-x-1/2" 
+                                 style="left: ${(item.lastYearRate / maxRate) * 100}%; bottom: 2px;" 
                                  data-tooltip="Last Year: ${item.lastYearRate}%">
                             </div>
-                            {/* Proposal Marker - Sits below the midline */}
-                            <div class="absolute h-3 w-1 bg-yellow-500 rounded-full" 
-                                 style="left: ${(item.proposedRate / maxRate) * 100}%; transform: translate(-50%, 0%);" 
+                            <div class="absolute h-4 w-1 bg-yellow-500 rounded-full transform -translate-x-1/2" 
+                                 style="left: ${(item.proposedRate / maxRate) * 100}%; top: 2px;" 
                                  data-tooltip="Proposal: ${item.proposedRate}%">
                             </div>
                         </div>
@@ -161,20 +163,38 @@ function createIncomeInputFields(container, dataNode) {
             `;
             const numInput = div.querySelector('input[type="number"]');
             const rangeInput = div.querySelector('input[type="range"]');
-            numInput.addEventListener('change', (e) => handleRateChange(e, item, rangeInput));
-            rangeInput.addEventListener('input', (e) => handleRateChange(e, item, numInput));
+            numInput.addEventListener('change', (e) => handleRateChange(e, item));
+            rangeInput.addEventListener('input', (e) => handleRateChange(e, item));
         }
         container.appendChild(div);
     });
 }
 
-function handleRateChange(event, item, otherInput) {
+function handleRateChange(event, item) {
+    const container = event.target.closest('.p-3');
+    if (!container) return;
+
+    const numInput = container.querySelector('input[type="number"]');
+    const rangeInput = container.querySelector('input[type="range"]');
+    const revenueElement = container.querySelector(`#revenue_${item.id}`);
+
     let newValue = parseFloat(event.target.value);
     if (isNaN(newValue) || newValue < 0) newValue = 0;
     if (newValue > 100) newValue = 100;
+    
     item.userRate = newValue;
-    event.target.value = newValue;
-    if(event.type === 'change') otherInput.value = newValue.toFixed(1); // for number input
+    
+    // Sync both inputs
+    numInput.value = newValue.toFixed(1);
+    rangeInput.value = newValue;
+    
+    // Update individual revenue display
+    if (revenueElement) {
+        const revenue = item.baseValue * (item.userRate / 100);
+        revenueElement.textContent = `£${revenue.toFixed(2)}bn`;
+    }
+
+    // Update total revenue display
     updateAllIncomeCalculations();
 }
 
@@ -358,7 +378,7 @@ function setupEventListeners() {
             else if (node.hasOwnProperty('userRate')) node.userRate = node.proposedRate;
         };
         incomeAdoptProposalButton.addEventListener('click', () => {
-            adopt(incomeData);
+            adopt(currentIncomeNode);
             updateIncomePage();
         });
     }
@@ -368,7 +388,7 @@ function setupEventListeners() {
             else if (node.hasOwnProperty('userRate')) node.userRate = node.lastYearRate;
         };
         incomeResetAllocationButton.addEventListener('click', () => {
-            reset(incomeData);
+            reset(currentIncomeNode);
             updateIncomePage();
         });
     }
