@@ -1,0 +1,31 @@
+#media-container {
+    width: 100%;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+#media-container img, #media-container video {
+    width: 100%;
+    height: auto;
+    border-radius: 8px;
+}
+
+#caption-container {
+    font-size: 1.125rem;
+    color: #4b5563;
+}
+
+.dot {
+    cursor: pointer;
+    height: 12px;
+    width: 12px;
+    margin: 0 4px;
+    background-color: #d1d5db;
+    border-radius: 50%;
+    display: inline-block;
+    transition: background-color 0.3s ease;
+}
+
+.dot.active {
+    background-color: #3b82f6;
+}
